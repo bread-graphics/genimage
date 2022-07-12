@@ -1,0 +1,22 @@
+[package]
+name = "genimage"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+bytemuck = "1.10.0"
+cfg-if = "1.0.0"
+const_fn = "0.4.9"
+ordered-float = "3.0.0"
+tinyvec = "1"
+
+[features]
+default = ["general_image"]
+general_image = []
+
+[build-dependencies]
+autocfg = "1.1.0"
+
+[dev-dependencies]
+ahash = { version = "0.7.6", default-features = false, features = ["const-random"] }
+itertools = { version = "0.10.3", default-features = false }
