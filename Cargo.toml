@@ -11,8 +11,8 @@ ordered-float = "3.0.0"
 tinyvec = "1"
 
 [features]
-default = ["general_image"]
-general_image = []
+default = ["alloc"]
+alloc = []
 
 [build-dependencies]
 autocfg = "1.1.0"

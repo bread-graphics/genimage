@@ -354,6 +354,76 @@ impl Pixel {
         let cnt = self.format().bytes() as usize;
         bytes[..cnt].copy_from_slice(&data_bytes[..cnt]);
     }
+
+    /// Fill a row of bytes with this pixel.
+    ///
+    /// Returns the number of bytes written.
+    pub(crate) fn fill_row(self, bytes: &mut [u8]) -> usize {
+        match self.format().bpp() {
+            1 => {
+                // only one bit per pixel
+                let raw = self.raw_u32();
+                if raw == 0 {
+                    bytes.iter_mut().for_each(|x| *x = 0);
+                } else {
+                    debug_assert_eq!(raw, 1);
+                    bytes.iter_mut().for_each(|x| *x = 0xFF);
+                }
+
+                bytes.len()
+            }
+            4 => {
+                // it's a nibble
+                let raw_u8 = self.raw_u32() as u8;
+                let byte = (raw_u8 << 4) | raw_u8;
+                bytes.iter_mut().for_each(|x| *x = byte);
+
+                bytes.len()
+            }
+            8 => {
+                // it's a byte
+                let byte = self.raw_u32() as u8;
+                bytes.iter_mut().for_each(|x| *x = byte);
+
+                bytes.len()
+            }
+            16 => {
+                // it's a word
+                let word = self.raw_u32() as u16;
+                let word_bytes = word.to_ne_bytes();
+                bytes
+                    .chunks_exact_mut(2)
+                    .map(|chunk| {
+                        chunk.copy_from_slice(&word_bytes);
+                    })
+                    .count()
+                    * 2
+            }
+            32 => {
+                // it's a double word
+                let word = self.raw_u32() as u32;
+                let word_bytes = word.to_ne_bytes();
+                bytes
+                    .chunks_exact_mut(4)
+                    .map(|chunk| {
+                        chunk.copy_from_slice(&word_bytes);
+                    })
+                    .count()
+                    * 4
+            }
+            bpp => {
+                // just call insert multiple times
+                let bcount: usize = (bpp / 8).into();
+                bytes
+                    .chunks_exact_mut(bcount)
+                    .map(|chunk| {
+                        self.insert(chunk);
+                    })
+                    .count()
+                    * bcount
+            }
+        }
+    }
 }
 
 fn iter_channels(
@@ -440,13 +510,10 @@ const LOW_BIT_MASKS: [u32; 33] = {
     low_bit_masks
 };
 
-#[cfg(test)]
+#[cfg(all(feature = "alloc", test))]
 mod tests {
     use alloc::vec::Vec;
-    use core::{
-        hash::{Hash, Hasher},
-        mem,
-    };
+    use core::hash::{Hash, Hasher};
 
     use super::*;
 

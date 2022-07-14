@@ -1,7 +1,7 @@
 // BSL 1.0 License
 
 use super::{BitsImage, GeneralImage, Innards, SolidColorImage};
-use crate::{Endianness, Format, Nothing, Pixel, Rgba};
+use crate::{divide_rounding_up, Endianness, Format, Nothing, Pixel, Rgba};
 use const_fn::const_fn;
 
 /// A builder that allows the user to construct images.
@@ -123,6 +123,7 @@ impl<Storage> Builder<Storage> {
                     format,
                     endianness,
                     bytes_per_scanline,
+                    repeat,
                     storage,
                 );
                 Innards::Bits(bits)
@@ -180,8 +181,4 @@ impl<Storage> Variant<Storage> {
 
 const fn bytes_per_scanline(width: usize, bpp: u8) -> usize {
     divide_rounding_up(width * bpp as usize, 8)
-}
-
-const fn divide_rounding_up(n: usize, d: usize) -> usize {
-    (n + d - 1) / d
 }

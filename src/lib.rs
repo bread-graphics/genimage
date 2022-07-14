@@ -85,7 +85,7 @@
 #![forbid(unsafe_code, future_incompatible, rust_2018_idioms)]
 #![no_std]
 
-#[cfg(feature = "general_image")]
+#[cfg(feature = "alloc")]
 extern crate alloc;
 
 pub(crate) mod array;
@@ -101,10 +101,11 @@ pub use format::{Channel, ColorType, Format};
 mod pixel;
 pub use pixel::{ChannelValue, Pixel};
 
-#[cfg(feature = "general_image")]
 mod general;
-#[cfg(feature = "general_image")]
 pub use general::{Builder, GeneralImage, Nothing};
+
+mod u32_buf;
+pub use u32_buf::U32Buf;
 
 /// The centerpiece trait for this library.
 ///
@@ -228,7 +229,7 @@ pub trait Image {
         let mut bytes = [0u32; MAX_BYTES_PER_PIXEL / 4];
         let index = match self.format().bpp() {
             1 => x % 8,
-            4 => x % 2,
+            4 => (x % 2) * 4,
             _ => 0,
         };
 
@@ -301,4 +302,8 @@ impl Endianness {
             Endianness::Big => u16::from_be_bytes(bytes),
         }
     }
+}
+
+const fn divide_rounding_up(n: usize, d: usize) -> usize {
+    (n + d - 1) / d
 }
